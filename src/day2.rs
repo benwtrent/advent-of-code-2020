@@ -1,81 +1,58 @@
 #[derive(Debug, Eq, PartialEq)]
-pub struct GiftBox {
-    l: usize,
-    w: usize,
-    h: usize,
+pub struct PasswordPolicy {
+    character: char,
+    min: usize,
+    max: usize,
 } 
 
-impl From<&str> for GiftBox {
-    fn from(s: &str) -> Self {
-        let coordinates: Vec<usize> = s.split("x").map(|s| s.parse().unwrap()).collect();
-        if coordinates.len() < 3 {
-            panic!(format!("Unexpected input {}", s));
-        }
-        GiftBox {
-            l: coordinates[0],
-            w: coordinates[1],
-            h: coordinates[2],
+impl From<&String> for PasswordPolicy {
+    fn from(s: &String) -> Self {
+        let spaces:Vec<&str> = s.split(" ").collect();
+        let character:char = spaces[1].chars().next().unwrap();
+        let vec:Vec<usize> = spaces[0].split("-").map(|i| i.parse().unwrap()).collect();
+        PasswordPolicy {
+            character,
+            min: vec[0],
+            max: vec[1]
         }
     }
 }
 
-impl GiftBox {
-    pub fn new() -> Self {
-        GiftBox {
-            l: 0,
-            w: 0,
-            h: 0
+
+impl PasswordPolicy {
+    
+    pub fn satisfied_1(&self, password: &str) -> bool {
+        let ct = password.chars().filter(|c| *c == self.character).count();
+        (self.min - 1) < ct && ct < (self.max + 1)
+    }
+
+    pub fn satisfied_2(&self, password: &str) -> bool {
+        let mut ans = false;
+        for (i, c) in password.chars().enumerate() {
+            if (i + 1) == self.min  || (i + 1) == self.max {
+                ans ^= self.character == c;
+            }
         }
-    }
-    pub fn merge(mut self, other: &GiftBox) -> Self {
-        self.h += other.h;
-        self.w += other.w;
-        self.l += other.l;
-        self
-    }
-    
-    pub fn paper(&self) -> usize {
-        let v = vec![self.l*self.w, self.w*self.h, self.h*self.l];
-        let min = v.iter().min().unwrap();
-        let sum = v.iter().map(|i| i*2).sum::<usize>();
-        sum + min
-    }
-    
-    pub fn side_perimeters(&self) -> Vec<usize> {
-        vec![
-        self.l * 2 + self.h * 2,
-        self.w * 2 + self.h * 2,
-        self.l * 2 + self.w * 2,
-        ]
-    }
-    
-    pub fn volume(&self) -> usize {
-        self.l * self.w * self.h
+        ans
     }
 }
 
 #[aoc_generator(day2)]
-fn input_to_vec(input: &str) -> Vec<GiftBox> {
-    input.lines().map(|i| i.into()).collect()
-}
-
-
-#[aoc(day2, part2)]
-fn needed_ribbon(input: &Vec<GiftBox>) -> usize {
-    let mut total = 0;
-    for i in input {
-        total += i.side_perimeters().iter().min().unwrap() + i.volume();
-    }
-    total
+fn input_to_vec(input: &str) -> Vec<(PasswordPolicy, String)> {
+    input.lines().map(|i| {
+        let splt = i.split(": ").map(|s| String::from(s)).collect::<Vec<String>>();
+        (PasswordPolicy::from(&splt[0]), splt[1].to_string())
+    }).collect()
 }
 
 #[aoc(day2, part1)]
-fn needed_paper(input: &Vec<GiftBox>) -> usize {
-    let mut total = 0;
-    for i in input {
-        total += i.paper();
-    }
-    total
+fn valid_password_count(input: &Vec<(PasswordPolicy, String)>) -> usize {
+    input.iter().filter(|(policy, password)| policy.satisfied_1(password.as_str())).count()
+}
+
+#[aoc(day2, part2)]
+fn valid_password_count2(input: &Vec<(PasswordPolicy, String)>) -> usize {
+    input.iter().filter(|(policy, password)| policy.satisfied_2(password.as_str())).count()
 }
 
 #[cfg(test)]
@@ -83,25 +60,17 @@ mod tests {
     use super::*;
    
     #[test]
-    fn parser_test() {
-        let g: GiftBox = "2x5x4".into();
-        assert_eq!(g, GiftBox{l: 2, w: 5, h: 4})
+    fn valid_policy() {
+        let input = "1-3 a: abcde \n1-3 b: cdefg \n2-9 c: ccccccccc\n";
+        let input = input_to_vec(input);
+        assert_eq!(valid_password_count(&input), 2)
     }
-    
+
     #[test]
-    fn test_paper() {
-        let g = GiftBox{l: 2, w: 3, h: 4};
-        assert_eq!(g.paper(), 58);
-        let g = GiftBox{l: 1, w: 1, h: 10};
-        assert_eq!(g.paper(), 43);
-    }
-    
-    #[test]
-    fn smallest_perimeter() {
-        let g = GiftBox{l: 2, w: 3, h: 4};
-        assert_eq!(g.side_perimeters().iter().min().unwrap(), &(10 as usize));
-        let g = GiftBox{l: 1, w: 1, h: 10};
-        assert_eq!(g.side_perimeters().iter().min().unwrap(), &(4 as usize));
+    fn valid_policy_2() {
+        let input = "1-3 a: abcde \n1-3 b: cdefg \n2-9 c: ccccccccc\n";
+        let input = input_to_vec(input);
+        assert_eq!(valid_password_count2(&input), 1)
     }
     
 }
