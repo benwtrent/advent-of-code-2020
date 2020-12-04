@@ -33,7 +33,6 @@ impl From<&str> for Passport {
         );
         s.split(" ").filter(|i| !i.is_empty()).for_each(|i| {
             let name_var: Vec<&str> = i.split(":").collect();
-            let var = name_var[1];
             match name_var[0] {
                 "byr" => birth_year = Option::Some(name_var[1].parse().unwrap()),
                 "iyr" => issue_year = Option::Some(name_var[1].parse().unwrap()),
@@ -81,60 +80,46 @@ impl Passport {
     }
 
     fn valid_birth_year(&self) -> bool {
-        1919 < self.birth_year.unwrap_or_default() && self.birth_year.unwrap_or_default() < 2003
+        (1920..=2002).contains(&self.birth_year.unwrap_or_default())
     }
 
     fn valid_issue_year(&self) -> bool {
-        2009 < self.issue_year.unwrap_or_default() && self.issue_year.unwrap_or_default() < 2021
+        (2010..=2020).contains(&self.issue_year.unwrap_or_default())
     }
 
     fn valid_exp_year(&self) -> bool {
-        2019 < self.exp_year.unwrap_or_default() && self.exp_year.unwrap_or_default() < 2031
+        (2020..=2030).contains(&self.exp_year.unwrap_or_default())
     }
 
     fn valid_hgt(&self) -> bool {
         if let Some(height) = self.height.as_ref() {
-            let re = regex::Regex::new(r"(\d+)in|(\d+)cm").unwrap();
-            if let Some(caps) = re.captures(height.as_str()) {
-                if let Some(cms) = caps.get(2) {
-                    let height: usize = cms.as_str().parse().unwrap();
-                    return 149 < height && height < 194;
-                }
-                if let Some(ins) = caps.get(1) {
-                    let height: usize = ins.as_str().parse().unwrap();
-                    return 58 < height && height < 77;
-                }
-            }
-            false
+            let range = match &height[height.len() - 2..] {
+                "in" => (59..=76),
+                "cm" => (150..=193),
+                _ => return false,
+            };
+            range.contains(&height[0..height.len() - 2].parse::<usize>().unwrap_or(0))
         } else {
             false
         }
     }
 
     fn valid_hair(&self) -> bool {
-        if let Some(hair) = self.hair_color.as_ref() {
-            let re = regex::Regex::new(r"^#[0-9a-f]{6}$").unwrap();
-            let captures = re.captures(hair.as_str());
-            captures.is_some()
-        } else {
-            false
-        }
+        Passport::valid_str(self.hair_color.as_ref(), r"^#[0-9a-f]{6}$")
     }
 
     fn valid_eyes(&self) -> bool {
-        if let Some(eyes) = self.eye_color.as_ref() {
-            let re = regex::Regex::new(r"^amb|blu|brn|gry|grn|hzl|oth$").unwrap();
-            let captures = re.captures(eyes.as_str());
-            captures.is_some()
-        } else {
-            false
-        }
+        Passport::valid_str(self.eye_color.as_ref(), r"^amb|blu|brn|gry|grn|hzl|oth$")
     }
 
     fn valid_pid(&self) -> bool {
-        if let Some(pid) = self.pid.as_ref() {
-            let re = regex::Regex::new(r"^[0-9]{9}$").unwrap();
-            let captures = re.captures(pid.as_str());
+        Passport::valid_str(self.pid.as_ref(), r"^[0-9]{9}$")
+    }
+
+    fn valid_str(maybe_str: Option<&String>, re: &str) -> bool {
+        if let Some(str) = maybe_str {
+            let re = regex::Regex::new(re).unwrap();
+            let captures = re.captures(str.as_str());
             captures.is_some()
         } else {
             false
