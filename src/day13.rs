@@ -37,7 +37,7 @@ fn magic_timestamp(input: &(usize, HashMap<usize, usize>)) -> usize {
     let mut timestamp = 0;
     let mut inc = buses[0].1;
     for &(i, bus) in &buses[1..] {
-        // friggin CRT sieve garbage
+        // friggin CRT sieve garbage see: https://en.wikipedia.org/wiki/Chinese_remainder_theorem#Computation
         while (timestamp + i) % bus != 0 {
             timestamp += inc;
         }
