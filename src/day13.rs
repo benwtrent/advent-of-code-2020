@@ -30,26 +30,6 @@ fn bus_wait_time(input: &(usize, HashMap<usize, usize>)) -> usize {
     busses[&best_bus_id] * (min_time - time)
 }
 
-/*fn gcd(a: usize, b: usize) -> usize {
-   if a == 0 {
-       return b;
-   }
-   return gcd(b % a, a);
-}
-
-fn all_gcd(vs: &[usize]) -> usize {
-    let mut v = vs[0];
-    for s in vs[1..] {
-        v = gcs(s, v);
-        if v == 1 {
-            return 1;
-        }
-    }
-    return v;
-}
-
-*/
-
 #[aoc(day13, part2)]
 fn magic_timestamp(input: &(usize, HashMap<usize, usize>)) -> usize {
     let mut buses:Vec<(usize, usize)> = input.1.iter().map(|(&pos, &id)| (pos, id)).collect();
