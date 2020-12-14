@@ -1,9 +1,9 @@
-use std::usize::MAX;
 use std::collections::HashMap;
+use std::usize::MAX;
 
 #[aoc_generator(day13)]
 fn to_vec(input: &str) -> (usize, HashMap<usize, usize>) {
-    let arrival:usize = input.lines().next().unwrap().parse().unwrap();
+    let arrival: usize = input.lines().next().unwrap().parse().unwrap();
     let mut busses = HashMap::new();
     for (i, s) in input.lines().skip(1).next().unwrap().split(",").enumerate() {
         if s != "x" {
@@ -32,7 +32,7 @@ fn bus_wait_time(input: &(usize, HashMap<usize, usize>)) -> usize {
 
 #[aoc(day13, part2)]
 fn magic_timestamp(input: &(usize, HashMap<usize, usize>)) -> usize {
-    let mut buses:Vec<(usize, usize)> = input.1.iter().map(|(&pos, &id)| (pos, id)).collect();
+    let mut buses: Vec<(usize, usize)> = input.1.iter().map(|(&pos, &id)| (pos, id)).collect();
     buses.sort_by(|a, b| a.0.partial_cmp(&b.0).unwrap());
     let mut timestamp = 0;
     let mut inc = buses[0].1;
@@ -46,7 +46,6 @@ fn magic_timestamp(input: &(usize, HashMap<usize, usize>)) -> usize {
     }
     timestamp
 }
-
 
 #[cfg(test)]
 mod tests {
@@ -64,8 +63,7 @@ mod tests {
     #[test]
     fn test_magic_timestamp() {
         let input = to_vec(TEST_INPUT);
-        let result = magic_timestamp(&input); 
+        let result = magic_timestamp(&input);
         assert_eq!(result, 1068781);
     }
-
 }
