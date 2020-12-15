@@ -1,7 +1,6 @@
 use bitvec::prelude::*;
 use regex;
 use std::collections::{HashMap, HashSet};
-use std::ops::BitAndAssign;
 
 struct MaskAndValues {
     mask: HashMap<u8, u8>,
@@ -33,7 +32,6 @@ impl MaskAndValues {
             }
             bits.set(*pos as usize, true);
         }
-        let new_key = bits.load::<usize>();
         let mut values = HashSet::new();
         for bit in 0..36usize {
             if !self.mask.contains_key(&(bit as u8)) {
