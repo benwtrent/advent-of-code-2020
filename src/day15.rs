@@ -18,8 +18,7 @@ fn last_spoken(input: &Vec<usize>, last: usize) -> usize {
         .collect();
     let mut last_spoken = *input.last().unwrap();
     for i in input.len()..last {
-        let maybe_spoken = turns_spoken.get(&last_spoken);
-        let newly_spoken = match maybe_spoken {
+        let newly_spoken = match turns_spoken.get(&last_spoken) {
             Some(last_time) => i - *last_time - 1,
             None => 0,
         };
