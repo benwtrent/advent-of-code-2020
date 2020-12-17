@@ -1,6 +1,4 @@
 use std::collections::HashMap;
-use std::fmt;
-use std::fmt::{Display, Formatter};
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]
 enum CubeState {
@@ -15,16 +13,6 @@ impl From<&str> for CubeState {
             "." => CubeState::Off,
             _ => unimplemented!(),
         }
-    }
-}
-
-impl Display for CubeState {
-    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        let s = match self {
-            CubeState::On => "#",
-            CubeState::Off => ".",
-        };
-        write!(f, "{}", s)
     }
 }
 
@@ -89,34 +77,10 @@ struct Cube {
     coordinates: [i32; 3],
 }
 
-impl Display for Cube {
-    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        write!(
-            f,
-            "{} [{} {} {}]",
-            self.state, self.coordinates[0], self.coordinates[1], self.coordinates[2]
-        )
-    }
-}
-
 #[derive(Debug, Copy, Clone)]
 struct HyperCube {
     state: CubeState,
     coordinates: [i32; 4],
-}
-
-impl Display for HyperCube {
-    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        write!(
-            f,
-            "{} [{} {} {} {}]",
-            self.state,
-            self.coordinates[0],
-            self.coordinates[1],
-            self.coordinates[2],
-            self.coordinates[3]
-        )
-    }
 }
 
 fn all_coordinate_generators<'a>(
