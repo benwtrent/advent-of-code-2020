@@ -9,6 +9,9 @@ edition = "2018"
 [lib]
 bench = false
 
+[unstable]
+const_generics = 'yes'
+
 [dependencies]
 aoc-runner = "0.2.0"
 aoc-runner-derive = "0.2.0"

@@ -1,3 +1,4 @@
+#![feature(min_const_generics)]
 extern crate aoc_runner;
 extern crate bitvec;
 extern crate regex;

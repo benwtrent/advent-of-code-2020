@@ -1,5 +1,6 @@
 use std::collections::HashMap;
 
+
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]
 enum CubeState {
     On,
@@ -16,17 +17,17 @@ impl From<&str> for CubeState {
     }
 }
 
-struct CoordinateDirection3d<'a> {
-    coordinates: [i32; 3],
-    direction: [i8; 3],
-    maximum: &'a [i32; 3],
-    minimum: &'a [i32; 3],
+struct CoordinateDirection<'a, const N: usize> {
+    coordinates: [i32; N],
+    direction: [i8; N],
+    maximum: &'a [i32; N],
+    minimum: &'a [i32; N],
 }
 
-impl Iterator for CoordinateDirection3d<'_> {
-    type Item = [i32; 3];
+impl <const N: usize> Iterator for CoordinateDirection<'_, N> {
+    type Item = [i32; N];
 
-    fn next(&mut self) -> Option<[i32; 3]> {
+    fn next(&mut self) -> Option<[i32; N]> {
         for (i, &d) in self.direction.iter().enumerate() {
             if (d < 0 && self.minimum[i] == self.coordinates[i])
                 || (d > 0 && self.maximum[i] == self.coordinates[i])
@@ -34,66 +35,38 @@ impl Iterator for CoordinateDirection3d<'_> {
                 return None;
             }
         }
-        self.coordinates = [
-            self.coordinates[0] + self.direction[0] as i32,
-            self.coordinates[1] + self.direction[1] as i32,
-            self.coordinates[2] + self.direction[2] as i32,
-        ];
-        Some(self.coordinates)
-    }
-}
-
-struct CoordinateDirection4d<'a> {
-    coordinates: [i32; 4],
-    direction: [i8; 4],
-    maximum: &'a [i32; 4],
-    minimum: &'a [i32; 4],
-}
-
-impl Iterator for CoordinateDirection4d<'_> {
-    type Item = [i32; 4];
-
-    fn next(&mut self) -> Option<[i32; 4]> {
-        for (i, &d) in self.direction.iter().enumerate() {
-            if (d < 0 && self.minimum[i] == self.coordinates[i])
-                || (d > 0 && self.maximum[i] == self.coordinates[i])
-            {
-                return None;
-            }
+        let mut coors = [0; N];
+        for i in 0..N {
+            coors[i] = self.coordinates[i] + self.direction[i] as i32;
         }
-        self.coordinates = [
-            self.coordinates[0] + self.direction[0] as i32,
-            self.coordinates[1] + self.direction[1] as i32,
-            self.coordinates[2] + self.direction[2] as i32,
-            self.coordinates[3] + self.direction[3] as i32,
-        ];
+        self.coordinates = coors;
         Some(self.coordinates)
     }
 }
 
 #[derive(Debug, Copy, Clone)]
-struct Cube {
+struct Cube<const N: usize> {
     state: CubeState,
-    coordinates: [i32; 3],
+    coordinates: [i32; N],
 }
 
-#[derive(Debug, Copy, Clone)]
-struct HyperCube {
-    state: CubeState,
-    coordinates: [i32; 4],
-}
-
-fn all_coordinate_generators<'a>(
-    cube: &'a Cube,
-    maximum: &'a [i32; 3],
-    minimum: &'a [i32; 3],
-) -> Vec<CoordinateDirection3d<'a>> {
-    let iterator_generator = |delta| CoordinateDirection3d {
+fn all_coordinate_generators<'a, const N: usize>(
+    cube: &'a Cube<N>,
+    maximum: &'a [i32; N],
+    minimum: &'a [i32; N],
+) -> Vec<CoordinateDirection<'a, N>> {
+    let iterator_generator = |delta| CoordinateDirection {
         coordinates: cube.coordinates.clone(),
         maximum: &maximum,
         minimum: &minimum,
         direction: delta,
     };
+    for x in -1..=1 {
+        let mut pts = [0; N];
+        for i in 0..(N * N) {
+           for  
+        }
+    }
     let mut v = vec![];
     for x in -1..=1 {
         for y in -1..=1 {
@@ -108,11 +81,11 @@ fn all_coordinate_generators<'a>(
 }
 
 fn all_4d_coordinate_generators<'a>(
-    cube: &'a HyperCube,
+    cube: &'a Cube<4>,
     maximum: &'a [i32; 4],
     minimum: &'a [i32; 4],
-) -> Vec<CoordinateDirection4d<'a>> {
-    let iterator_generator = |delta| CoordinateDirection4d {
+) -> Vec<CoordinateDirection<'a, 4>> {
+    let iterator_generator = |delta| CoordinateDirection {
         coordinates: cube.coordinates.clone(),
         maximum: &maximum,
         minimum: &minimum,
@@ -133,28 +106,19 @@ fn all_4d_coordinate_generators<'a>(
     v
 }
 
-const DEFAULT_CUBE: Cube = Cube {
-    coordinates: [0; 3],
-    state: CubeState::Off,
-};
-
-const DEFAULT_HYPER_CUBE: HyperCube = HyperCube {
-    coordinates: [0; 4],
-    state: CubeState::Off,
-};
-
-impl Cube {
+impl <const N: usize> Cube<N> {
     fn new_state(
         &self,
-        max_coordinates: &[i32; 3],
-        min_coordinates: &[i32; 3],
-        space: &HashMap<[i32; 3], Cube>,
+        max_coordinates: &[i32; N],
+        min_coordinates: &[i32; N],
+        space: &HashMap<[i32; N], Cube<N>>,
     ) -> Self {
         let mut visual_iters = all_coordinate_generators(&self, max_coordinates, min_coordinates);
         let mut active_count = 0;
+        let default_cube = Cube { coordinates: [0; N], state: CubeState::Off};
         for coor_iter in visual_iters.iter_mut() {
             if let Some(c) = coor_iter.next() {
-                if space.get(&c).unwrap_or(&DEFAULT_CUBE).state == CubeState::On {
+                if space.get(&c).unwrap_or(&default_cube).state == CubeState::On {
                     active_count += 1;
                 }
             }
@@ -175,41 +139,8 @@ impl Cube {
     }
 }
 
-impl HyperCube {
-    fn new_state(
-        &self,
-        max_coordinates: &[i32; 4],
-        min_coordinates: &[i32; 4],
-        space: &HashMap<[i32; 4], HyperCube>,
-    ) -> Self {
-        let mut visual_iters =
-            all_4d_coordinate_generators(&self, max_coordinates, min_coordinates);
-        let mut active_count = 0;
-        for coor_iter in visual_iters.iter_mut() {
-            if let Some(c) = coor_iter.next() {
-                if space.get(&c).unwrap_or(&DEFAULT_HYPER_CUBE).state == CubeState::On {
-                    active_count += 1;
-                }
-            }
-        }
-        let mut state = self.state.clone();
-        if self.state == CubeState::On {
-            if !(active_count == 3 || active_count == 2) {
-                state = CubeState::Off;
-            }
-        }
-        if self.state == CubeState::Off && active_count == 3 {
-            state = CubeState::On;
-        }
-        HyperCube {
-            coordinates: self.coordinates.clone(),
-            state,
-        }
-    }
-}
-
 #[aoc_generator(day17, part1)]
-fn to_vec(input: &str) -> (HashMap<[i32; 3], Cube>, [i32; 3]) {
+fn to_vec(input: &str) -> (HashMap<[i32; 3], Cube<3>>, [i32; 3]) {
     let mut space: HashMap<[i32; 3], Cube> = HashMap::new();
     let mut y = 0;
     let mut max_x = 0;
@@ -230,7 +161,7 @@ fn to_vec(input: &str) -> (HashMap<[i32; 3], Cube>, [i32; 3]) {
 }
 
 #[aoc(day17, part1)]
-fn active_state_count(input: &(HashMap<[i32; 3], Cube>, [i32; 3])) -> usize {
+fn active_state_count(input: &(HashMap<[i32; 3], Cube<3>>, [i32; 3])) -> usize {
     let mut curr_vals = input.0.clone();
     let mut z_max = 1;
     let mut z_min = -1;
@@ -297,15 +228,15 @@ fn active_state_count(input: &(HashMap<[i32; 3], Cube>, [i32; 3])) -> usize {
 }
 
 #[aoc_generator(day17, part2)]
-fn to_hyper_vec(input: &str) -> (HashMap<[i32; 4], HyperCube>, [i32; 4]) {
-    let mut space: HashMap<[i32; 4], HyperCube> = HashMap::new();
+fn to_hyper_vec(input: &str) -> (HashMap<[i32; 4], Cube<4>>, [i32; 4]) {
+    let mut space: HashMap<[i32; 4], Cube<4>> = HashMap::new();
     let mut y = 0;
     let mut max_x = 0;
     for l in input.lines() {
         for (x, s) in l.split("").filter(|&s| !s.is_empty()).enumerate() {
             space.insert(
                 [x as i32, y, 0, 0],
-                HyperCube {
+                Cube {
                     state: s.into(),
                     coordinates: [x as i32, y, 0, 0],
                 },
@@ -318,7 +249,7 @@ fn to_hyper_vec(input: &str) -> (HashMap<[i32; 4], HyperCube>, [i32; 4]) {
 }
 
 #[aoc(day17, part2)]
-fn hyper_active_state_count(input: &(HashMap<[i32; 4], HyperCube>, [i32; 4])) -> usize {
+fn hyper_active_state_count(input: &(HashMap<[i32; 4], Cube<4>>, [i32; 4])) -> usize {
     let mut curr_vals = input.0.clone();
     let mut w_max = 1;
     let mut w_min = -1;
@@ -333,7 +264,7 @@ fn hyper_active_state_count(input: &(HashMap<[i32; 4], HyperCube>, [i32; 4])) ->
             for z in z_min..=z_max {
                 for w in z_min..=z_max {
                     let coors = [x, y, z, w];
-                    curr_vals.entry(coors.clone()).or_insert(HyperCube {
+                    curr_vals.entry(coors.clone()).or_insert(Cube {
                         coordinates: coors,
                         state: CubeState::Off,
                     });
@@ -346,7 +277,7 @@ fn hyper_active_state_count(input: &(HashMap<[i32; 4], HyperCube>, [i32; 4])) ->
             let coors = [x, y, 0, 0];
             curr_vals.insert(
                 coors.clone(),
-                HyperCube {
+                Cube {
                     coordinates: coors,
                     state: CubeState::Off,
                 },
@@ -376,7 +307,7 @@ fn hyper_active_state_count(input: &(HashMap<[i32; 4], HyperCube>, [i32; 4])) ->
                 for z in z_min..=z_max {
                     for w in w_min..=w_max {
                         let coors = [x, y, z, w];
-                        new_vals.entry(coors.clone()).or_insert(HyperCube {
+                        new_vals.entry(coors.clone()).or_insert(Cube {
                             coordinates: coors,
                             state: CubeState::Off,
                         });
