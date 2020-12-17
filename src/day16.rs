@@ -121,8 +121,8 @@ fn departure_products(input: &(Vec<Field>, Vec<usize>, Vec<Vec<usize>>)) -> usiz
         .1
         .iter()
         .enumerate()
-        .filter(|(i, v)| field_translation[i].name.contains("departure"))
-        .map(|(i, v)| v)
+        .filter(|(i, _)| field_translation[i].name.contains("departure"))
+        .map(|(_, v)| v)
         .product()
 }
 
